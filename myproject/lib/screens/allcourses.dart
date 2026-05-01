@@ -1,10 +1,9 @@
-// ignore_for_file: unused_import
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'teachers_otions_screen.dart';
-import 'viewcoursesoption.dart'; // Replace with your actual student screen import
-import '../PROFILE/ProfileSettingsPage.dart'; // Import the ProfileSettingPage
+import 'viewcoursesoption.dart';
+import '../PROFILE/ProfileSettingsPage.dart';
+import '../COURSES/teachersprofile.dart';
 
 class FullCoursePage extends StatefulWidget {
   final bool isTeacher;
@@ -29,6 +28,12 @@ class _FullCoursePageState extends State<FullCoursePage> {
     _fetchAllTeachers();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _fetchAllTeachers() async {
     setState(() {
       _isLoading = true;
@@ -39,20 +44,19 @@ class _FullCoursePageState extends State<FullCoursePage> {
       final snapshot =
           await FirebaseFirestore.instance.collection('teachers').get();
 
-      final List<Map<String, dynamic>> allTeachers =
-          snapshot.docs.map((doc) {
-            final data = doc.data();
-            return {
-              'id': doc.id,
-              'name': data['name'] ?? 'Unknown Teacher',
-              'qualification': data['qualification'] ?? 'N/A',
-              'courseOfDegree': data['courseOfDegree'] ?? 'N/A',
-              'experience': data['experience'] ?? 'N/A',
-              'teachingMode': data['teachingMode'] ?? 'N/A',
-              'location': data['location'] ?? 'N/A',
-              'courses': data['teachingCourses'] ?? [],
-            };
-          }).toList();
+      final List<Map<String, dynamic>> allTeachers = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'id': doc.id,
+          'name': data['name'] ?? 'Unknown Teacher',
+          'qualification': data['qualification'] ?? 'N/A',
+          'courseOfDegree': data['courseOfDegree'] ?? 'N/A',
+          'experience': data['experience'] ?? 'N/A',
+          'teachingMode': data['teachingMode'] ?? 'N/A',
+          'location': data['location'] ?? 'N/A',
+          'courses': data['teachingCourses'] ?? [],
+        };
+      }).toList();
 
       if (mounted) {
         setState(() {
@@ -73,16 +77,16 @@ class _FullCoursePageState extends State<FullCoursePage> {
 
   void _filterTeachers(String query) {
     final lowerQuery = query.toLowerCase();
-    final filtered =
-        _teachers.where((teacher) {
-          final name = teacher['name'].toString().toLowerCase();
-          final courses = _getSubjects(teacher['courses']).toLowerCase();
-          return name.contains(lowerQuery) || courses.contains(lowerQuery);
-        }).toList();
+    final filtered = _teachers.where((teacher) {
+      final name = teacher['name'].toString().toLowerCase();
+      final courses = _getSubjects(teacher['courses']).toLowerCase();
+      final location = teacher['location'].toString().toLowerCase();
+      return name.contains(lowerQuery) ||
+          courses.contains(lowerQuery) ||
+          location.contains(lowerQuery);
+    }).toList();
 
-    setState(() {
-      _filteredTeachers = filtered;
-    });
+    setState(() => _filteredTeachers = filtered);
   }
 
   @override
@@ -99,7 +103,8 @@ class _FullCoursePageState extends State<FullCoursePage> {
             if (widget.isTeacher) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const TeacherOptionsScreen()),
+                MaterialPageRoute(
+                    builder: (_) => const TeacherOptionsScreen()),
               );
             } else {
               Navigator.pushReplacement(
@@ -109,77 +114,131 @@ class _FullCoursePageState extends State<FullCoursePage> {
             }
           },
         ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              _isSearchActive ? Icons.close : Icons.search,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              setState(() {
+                _isSearchActive = !_isSearchActive;
+                if (!_isSearchActive) {
+                  _searchController.clear();
+                  _filterTeachers('');
+                }
+              });
+            },
+          ),
+        ],
       ),
-      body:
-          _isLoading
-              ? const Center(
-                child: CircularProgressIndicator(color: Colors.white),
-              )
-              : _errorMessage.isNotEmpty
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            )
+          : _errorMessage.isNotEmpty
               ? Center(
-                child: Text(
-                  _errorMessage,
-                  style: const TextStyle(color: Colors.white),
-                ),
-              )
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline,
+                          color: Colors.white54, size: 60),
+                      const SizedBox(height: 12),
+                      Text(
+                        _errorMessage,
+                        style: const TextStyle(color: Colors.white),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _fetchAllTeachers,
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                )
               : Column(
-                children: [
-                  // Search Bar
-                  if (_isSearchActive)
+                  children: [
+                    // Search Bar
+                    if (_isSearchActive)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 8.0),
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: _filterTeachers,
+                          autofocus: true,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            hintText: 'Search by name, subject, or location',
+                            hintStyle: const TextStyle(color: Colors.white70),
+                            filled: true,
+                            fillColor: const Color(0xFF1F2A74),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
+                            ),
+                            prefixIcon: const Icon(Icons.search,
+                                color: Colors.white),
+                            suffixIcon: IconButton(
+                              icon: const Icon(Icons.clear,
+                                  color: Colors.white),
+                              onPressed: () {
+                                _searchController.clear();
+                                _filterTeachers('');
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    // Count
                     Padding(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8.0,
-                      ),
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: _filterTeachers,
-                        autofocus: true,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          hintText: 'Search by name or subject',
-                          hintStyle: const TextStyle(color: Colors.white70),
-                          filled: true,
-                          fillColor: const Color(0xFF1F2A74),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none,
+                          horizontal: 16, vertical: 8),
+                      child: Row(
+                        children: [
+                          Text(
+                            '${_filteredTeachers.length} teacher${_filteredTeachers.length != 1 ? 's' : ''} found',
+                            style: const TextStyle(
+                                color: Colors.white70, fontSize: 13),
                           ),
-                          prefixIcon: const Icon(
-                            Icons.search,
-                            color: Colors.white,
-                          ),
-                          suffixIcon: IconButton(
-                            icon: const Icon(Icons.clear, color: Colors.white),
-                            onPressed: () {
-                              _searchController.clear();
-                              _filterTeachers('');
-                              setState(() {
-                                _isSearchActive = false;
-                              });
-                            },
-                          ),
-                        ),
+                        ],
                       ),
                     ),
-                  // Grid of Teachers
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: GridView.count(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 15,
-                        crossAxisSpacing: 15,
-                        childAspectRatio: 0.8,
-                        children: List.generate(
-                          _filteredTeachers.length,
-                          (index) => tutorCard(_filteredTeachers[index]),
-                        ),
-                      ),
+
+                    // Grid of Teachers
+                    Expanded(
+                      child: _filteredTeachers.isEmpty
+                          ? const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.search_off,
+                                      color: Colors.white54, size: 64),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'No teachers found.',
+                                    style: TextStyle(color: Colors.white70),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: GridView.count(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 15,
+                                crossAxisSpacing: 15,
+                                childAspectRatio: 0.78,
+                                children: _filteredTeachers
+                                    .map((t) => tutorCard(t, context))
+                                    .toList(),
+                              ),
+                            ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
       bottomNavigationBar: BottomAppBar(
         color: const Color(0xFF0F1A54),
         child: Row(
@@ -187,17 +246,16 @@ class _FullCoursePageState extends State<FullCoursePage> {
           children: [
             IconButton(
               icon: const Icon(Icons.home, color: Colors.white),
-              onPressed: () {
-                Navigator.popUntil(context, (route) => route.isFirst);
-              },
+              onPressed: () =>
+                  Navigator.popUntil(context, (route) => route.isFirst),
             ),
             IconButton(
               icon: const Icon(Icons.search, color: Colors.white),
-              onPressed: () {
-                setState(() {
-                  _isSearchActive = true;
-                });
-              },
+              onPressed: () => setState(() => _isSearchActive = true),
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh, color: Colors.white),
+              onPressed: _fetchAllTeachers,
             ),
             IconButton(
               icon: const Icon(Icons.person, color: Colors.white),
@@ -216,55 +274,90 @@ class _FullCoursePageState extends State<FullCoursePage> {
     );
   }
 
-  Widget tutorCard(Map<String, dynamic> teacher) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 209, 209, 210),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        children: [
-          const CircleAvatar(
-            radius: 25,
-            backgroundColor: Color(0xFF0F1A54),
-            child: Icon(Icons.person, size: 30, color: Colors.white),
+  Widget tutorCard(Map<String, dynamic> teacher, BuildContext context) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => TeacherProfileDetailPage(teacher: teacher),
           ),
-          const SizedBox(height: 8),
-          Text(
-            teacher['name'],
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF0F1A54),
+        );
+      },
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: const Color.fromARGB(255, 209, 209, 210),
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-          Text(
-            "${teacher['qualification']} in ${teacher['courseOfDegree']}",
-            style: const TextStyle(fontSize: 12, color: Color(0xFF0F1A54)),
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-          const SizedBox(height: 5),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  bulletPoint("${teacher['experience']} exp", Icons.work),
-                  bulletPoint(
-                    _getSubjects(teacher['courses']),
-                    Icons.menu_book,
-                  ),
-                  bulletPoint("${teacher['location']}", Icons.home),
-                  bulletPoint("${teacher['teachingMode']}", Icons.wifi),
-                ],
+          ],
+        ),
+        child: Column(
+          children: [
+            const CircleAvatar(
+              radius: 26,
+              backgroundColor: Color(0xFF0F1A54),
+              child: Icon(Icons.person, size: 30, color: Colors.white),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              teacher['name'],
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F1A54),
+                fontSize: 13,
+              ),
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+            Text(
+              '${teacher['qualification']} in ${teacher['courseOfDegree']}',
+              style: const TextStyle(fontSize: 11, color: Color(0xFF0F1A54)),
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+            const SizedBox(height: 5),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    bulletPoint('${teacher['experience']} exp', Icons.work),
+                    bulletPoint(
+                        _getSubjects(teacher['courses']), Icons.menu_book),
+                    bulletPoint('${teacher['location']}', Icons.location_on),
+                    bulletPoint(
+                        '${teacher['teachingMode']}', Icons.computer),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F1A54),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Text(
+                'View Profile',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -278,21 +371,21 @@ class _FullCoursePageState extends State<FullCoursePage> {
     }
     return subjects.isEmpty
         ? 'N/A'
-        : subjects.take(3).join(', ') + (subjects.length > 3 ? '...' : '');
+        : subjects.take(2).join(', ') + (subjects.length > 2 ? '...' : '');
   }
 
   static Widget bulletPoint(String text, IconData icon) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: Color(0xFF0F1A54)),
-        const SizedBox(width: 5),
+        Icon(icon, size: 14, color: Color(0xFF0F1A54)),
+        const SizedBox(width: 4),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF0F1A54)),
+            style: const TextStyle(fontSize: 11, color: Color(0xFF0F1A54)),
             overflow: TextOverflow.ellipsis,
-            maxLines: 2,
+            maxLines: 1,
           ),
         ),
       ],

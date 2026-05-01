@@ -60,7 +60,7 @@ class AboutPage extends StatelessWidget {
               // App Name
               Center(
                 child: Text(
-                  'Tutor Finder', // Replace with your app name
+                  'TeachUp',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -71,7 +71,7 @@ class AboutPage extends StatelessWidget {
               ),
               Center(
                 child: Text(
-                  'Your Academic Companion', // Replace with your app tagline
+                  'Your Academic Companion',
                   style: TextStyle(
                     fontSize: 16,
                     fontStyle: FontStyle.italic,
@@ -237,7 +237,7 @@ class AboutPage extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
-                                  'Your Name or Team Name\nDepartment of Computer Science\nYour University',
+                                  'TeachUp Development Team\nDepartment of Computer Science',
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: textColor,
@@ -295,7 +295,7 @@ class AboutPage extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'support@example.com',
+                            'support@teachup.app',
                             style: TextStyle(fontSize: 16, color: accentColor),
                           ),
                         ],
@@ -315,7 +315,7 @@ class AboutPage extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'example.com',
+                            'www.teachup.app',
                             style: TextStyle(fontSize: 16, color: accentColor),
                           ),
                         ],

@@ -8,26 +8,20 @@ class LoginSelectionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
+        fit: StackFit.expand,
         children: [
-          // ✅ Background image (full screen + shows left side properly)
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/3421.avif',
-              fit: BoxFit.cover, // ✅ Cover full screen
-              alignment: const Alignment(
-                -0.7,
-                0,
-              ), // ✅ Shift left to show left side
-            ),
+          // Background image
+          Image.asset(
+            'assets/images/directing_image.jpg',
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+            errorBuilder: (_, __, ___) =>
+                Container(color: const Color(0xFF06041E)),
           ),
-
-          // ✅ Navy blue transparent overlay
-          Positioned.fill(
-            child: Container(
-              color: const Color.fromARGB(255, 6, 4, 34).withOpacity(0.6),
-            ),
+          // Navy overlay (adjusted for aesthetic contrast)
+          Container(
+            color: const Color.fromARGB(255, 6, 4, 34).withOpacity(0.5),
           ),
-
           // Back button
           SafeArea(
             child: Padding(
@@ -38,20 +32,37 @@ class LoginSelectionScreen extends StatelessWidget {
                   backgroundColor: Colors.black.withOpacity(0.5),
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ),
               ),
             ),
           ),
-
           // Buttons
           Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Logo (Book Graphic)
+                Image.asset(
+                  'assets/images/8.png',
+                  height: 120,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(height: 20),
+                
+                // Tagline
+                const Text(
+                  'Welcome back, join us as a',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 40),
                 // Teacher Login Button
                 SizedBox(
                   width: 250,
